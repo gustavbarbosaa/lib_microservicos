@@ -1,0 +1,17 @@
+server:
+  port: 8082
+  servlet:
+    context-path: /book
+
+spring:
+  application:
+    name: ms-user
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5434/book_db
+    username: postgres
+    password: Guga1957!
+  jpa:
+    hibernate:
+      ddl-auto: update
+
