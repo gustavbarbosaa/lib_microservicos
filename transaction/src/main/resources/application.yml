@@ -1,0 +1,25 @@
+server:
+  port: 8083
+  servlet:
+    context-path: /transaction
+
+spring:
+  application:
+    name: ms-transaction
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5435/transaction_db
+    username: postgres
+    password: Guga1957!
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+feign:
+  books:
+    name: books
+    url: http://localhost:8082/book/v1/book
+  users:
+    name: users
+    url: http://localhost:8081/user/v1/users
+
