@@ -2,6 +2,7 @@ package br.com.catolica.transaction.services;
 
 import br.com.catolica.transaction.client.BookTransaction;
 import br.com.catolica.transaction.client.UserTransaction;
+import br.com.catolica.transaction.config.RabbitMQConfig;
 import br.com.catolica.transaction.domain.Transaction;
 import br.com.catolica.transaction.dto.TransactionDTO;
 import br.com.catolica.transaction.dto.response.BookDTO;
@@ -9,6 +10,7 @@ import br.com.catolica.transaction.dto.response.UserDTO;
 import br.com.catolica.transaction.mapper.TransactionMapper;
 import br.com.catolica.transaction.repositories.TransactionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -21,6 +23,8 @@ public class TransactionService {
     private final UserTransaction userTransaction;
     private final TransactionRepository transactionRepository;
     private final TransactionMapper transactionMapper;
+    private final RabbitTemplate rabbitTemplate;
+    private final RabbitMQConfig rabbitMQConfig;
 
     public TransactionDTO save(@RequestBody TransactionDTO transactionDTO) {
 
@@ -42,6 +46,7 @@ public class TransactionService {
         transactionDTO.setLoanDate(LocalDateTime.now());
 
         Transaction transaction = transactionMapper.dtoToEntity(transactionDTO);
+        rabbitTemplate.convertAndSend(rabbitMQConfig.getEmailExchangeName(), rabbitMQConfig.getEmailRoutingKey(), user.getEmail());
         transactionRepository.save(transaction);
         return transactionMapper.entityToDTO(transaction);
     }
