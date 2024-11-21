@@ -14,6 +14,18 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+  rabbitmq:
+    host: localhost                # Endereço do RabbitMQ
+    port: 5672                     # Porta do RabbitMQ (padrão 5672)
+    username: admin                # Nome de usuário para o RabbitMQ
+    password: admin                # Senha para o RabbitMQ
+    virtual-host: /                # Virtual host, caso você não tenha um personalizado
+    queue:
+      name: email                  # Nome da fila (mantenha o que você já usou)
+    exchange:
+      name: emailExchange          # Nome da exchange (como você já configurou)
+    routing-key:
+      name: emailRoutingKey
 
 feign:
   books:

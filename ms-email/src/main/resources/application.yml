@@ -1,0 +1,31 @@
+server:
+  port: 8084
+  servlet:
+    context-path: /email
+
+spring:
+  application:
+    name: ms-email
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: gustavoaraujohab@gmail.com
+    password: eeiq noum sjpl otqw
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: admin
+    password: admin
+    virtual-host: /
+    queue:
+      name: email
+    exchange:
+      name: emailExchange
+    routing-key:
+      name: emailRoutingKey
