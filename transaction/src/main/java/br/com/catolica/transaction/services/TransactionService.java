@@ -13,6 +13,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.time.Period;
+import java.math.BigDecimal;
+import java.time.temporal.ChronoUnit;
+import br.com.catolica.transaction.dto.response.BookDTO;
+import br.com.catolica.transaction.dto.response.UserDTO;
+
+
 
 @Service
 @RequiredArgsConstructor
@@ -39,10 +48,87 @@ public class TransactionService {
             throw new IllegalStateException("Usuário não encontrado com o ID: " + transactionDTO.getUserId());
         }
 
-        transactionDTO.setLoanDate(LocalDateTime.now());
+        // transactionDTO.setLoanDate(LocalDateTime.now());
 
         Transaction transaction = transactionMapper.dtoToEntity(transactionDTO);
         transactionRepository.save(transaction);
         return transactionMapper.entityToDTO(transaction);
+    }
+
+
+    public List<TransactionDTO> getAll() {
+        return transactionRepository.findAll()
+                .stream()
+                .map(transactionMapper::entityToDTO)
+                .toList();
+    }
+
+    public TransactionDTO verificaMulta(Long id) throws Exception {
+        var movimentacao = transactionRepository.findById(id).orElse(null);
+
+        if (movimentacao == null) {
+            throw new Exception("Movimentação não foi encontrada");
+        }
+
+        LocalDateTime prazo = movimentacao.getLoanDate().plusDays(3);
+        LocalDateTime dataAtual = LocalDateTime.now();
+
+        if (prazo.isBefore(dataAtual)) {
+            Period diferenca = Period.between(prazo.toLocalDate(), dataAtual.toLocalDate());
+            int totalDias = diferenca.getYears() * 365 + diferenca.getMonths() * 30 + diferenca.getDays();
+            double valorMulta = 1.00 * totalDias;
+
+            movimentacao.setFineValue(BigDecimal.valueOf(valorMulta));
+            movimentacao.setReturnDate(dataAtual);
+
+            transactionRepository.save(movimentacao);
+
+            UserDTO user = userTransaction.getUserById(movimentacao.getUserId());
+            BookDTO book = bookTransaction.getBookById(movimentacao.getBookId());
+
+            System.out.println(
+                    user.getName() + " está com o livro: " + book.getTitulo() +
+                            " com " + totalDias + " dias de atraso"
+            );
+        } else {
+
+            System.out.println("O livro ainda está no prazo de 3 dias!");
+
+            movimentacao.setLoanDate(dataAtual); // Atualiza a data do empréstimo, se necessário
+            transactionRepository.save(movimentacao);
+        }
+
+        return transactionMapper.entityToDTO(movimentacao);
+    }
+
+
+
+
+
+    public void movimentacoesComAtraso() {
+
+        List<Transaction> movimentacoesSemDevolucao = transactionRepository
+                .findByReturnDateIsNullOrReturnDateBefore(LocalDateTime.now());
+
+        if (movimentacoesSemDevolucao.isEmpty()) {
+            System.out.println("Não existem movimentações com atraso!");
+        } else {
+            System.out.println("Movimentações com atraso:");
+        }
+
+
+        for (Transaction m : movimentacoesSemDevolucao) {
+
+            UserDTO user = userTransaction.getUserById(m.getUserId());
+            BookDTO book = bookTransaction.getBookById(m.getBookId());
+
+            System.out.println(
+                    "ID Transação: " + m.getId() +
+                            ", Usuário: " + (user != null ? user.getName() : "Desconhecido") + " (" + (user != null ? user.getCpf() : "N/A") + ")" +
+                            ", Livro: " + (book != null ? book.getTitulo() : "Desconhecido") +
+                            ", Data Empréstimo: " + m.getLoanDate() +
+                            ", Data Devolução Esperada: " + m.getReturnDate()
+            );
+        }
     }
 }
